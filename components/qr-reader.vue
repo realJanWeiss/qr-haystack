@@ -1,5 +1,5 @@
 <template>
-  <div class="qr-reader" ref="readerRef" id="reader" />
+  <div class="qr-reader" ref="qrReaderRef" id="reader" />
 </template>
 
 <script setup lang="ts">
@@ -9,8 +9,6 @@ import { CodeFormat, type CodeResult } from "./qr-reader.types";
 const emits = defineEmits<{
   (e: 'detected', value: CodeResult): void;
 }>();
-
-const readerRef = ref<HTMLDivElement | null>(null);
 
 const onScanSuccess: QrcodeSuccessCallback = (decodedText, decodedResult) => {
   emits('detected', {
@@ -23,30 +21,45 @@ const onScanFailure: QrcodeErrorCallback  = (_error) => {}
 
 let html5Qrcode: Html5Qrcode | undefined;
 
-const getVideoConstraints = () => {
-  return {
-    height: document.documentElement.clientHeight,
-    width: document.documentElement.clientWidth
-  };
-};
+const startScan = async () => {
+  const windowHeight = document.documentElement.clientHeight;
+  const windowWidth = document.documentElement.clientWidth;
+  
+  await html5Qrcode?.start(
+    {},
+    {
+      fps: 10,
+      qrbox: 250,
+      videoConstraints: {
+        width: windowWidth,
+        height: Math.max(250, Math.min(500, windowHeight * 0.75)),
+        facingMode: 'environment'
+      },
+    },
+    onScanSuccess,
+    onScanFailure
+  )
+}
 
 const handleResize = async () => {
   if (html5Qrcode?.getState() === Html5QrcodeScannerState.SCANNING) {
-    await html5Qrcode.applyVideoConstraints(getVideoConstraints());
     await html5Qrcode.stop();
-    await html5Qrcode.start({ facingMode: 'environment' }, { fps: 10 }, onScanSuccess, onScanFailure)
+    await startScan()
   }
 };
 
-let handlingResize = false;
-const throttledResize = () => {
-  if (!handlingResize) {
-    handlingResize = true;
-    handleResize().finally(() => {
-      handlingResize = false;
-    });
+let handlingResizeTimeout: ReturnType<typeof setTimeout> | undefined;
+const debounceResize = () => {
+  if (!handlingResizeTimeout) {
+    handlingResizeTimeout = setTimeout(() => {
+      handleResize().finally(() => {
+        handlingResizeTimeout = undefined;
+      });
+    }, 500);
   }
 }
+
+let resizeObserver: ResizeObserver;
 
 onMounted(async () => {
   const config: Html5QrcodeFullConfig = {
@@ -56,15 +69,38 @@ onMounted(async () => {
   html5Qrcode = new Html5Qrcode(
     "reader",
     config);
-  await html5Qrcode.start({ facingMode: 'environment' }, { fps: 10 }, onScanSuccess, onScanFailure)
-  html5Qrcode.applyVideoConstraints({...getVideoConstraints(), facingMode: 'environment' });
-
-  window.addEventListener('resize', throttledResize);
+  await startScan()
+  window.addEventListener('resize', debounceResize);
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', throttledResize);
+  resizeObserver?.disconnect();
+  html5Qrcode?.stop()
+  window.removeEventListener('resize', debounceResize);
 })
+
+const elementHeight = ref<number | undefined>();
+const qrReaderRef = ref<HTMLDivElement | null>(null);
+onMounted(() => {
+  resizeObserver = new ResizeObserver((entries) => {
+    elementHeight.value = entries[0].contentRect.height;
+  });
+  watch(
+    qrReaderRef,
+    (newValue) => {
+      if (newValue) {
+        resizeObserver.observe(newValue);
+      } else {
+        resizeObserver.disconnect();
+      }
+    },
+    { immediate: true}
+  );
+})
+
+defineExpose({
+  height: elementHeight
+});
 </script>
 
 <style>
