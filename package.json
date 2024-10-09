@@ -5,11 +5,13 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "lint": "eslint .",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/eslint": "^0.5.7",
     "canvas-confetti": "^1.9.3",
     "html5-qrcode": "2.3.8",
     "nuxt": "3.13.2",
@@ -17,6 +19,8 @@
     "vue-router": "4.4.5"
   },
   "devDependencies": {
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "sass-embedded": "^1.79.4"
   }
 }

@@ -3,19 +3,25 @@
     <qr-reader ref="qrReaderRef" @detected="onDetected" />
     <div
       class="content-area"
-      :style="{ '--content-area-margin-top': qrReaderRef?.height ? qrReaderRef.height + 'px' : '75vh' }"
+      :style="{
+        '--content-area-margin-top': qrReaderRef?.height
+          ? qrReaderRef.height + 'px'
+          : '75vh'
+      }"
     >
       <span v-if="!detected" class="text--m">Can you find the needle?</span>
       <template v-else>
         <span class="text--m">You found</span>
-        <span class="text--l bold">{{ QrOption.NEEDLE === detected ? 'the needle!!!' : QrOption.HAY }}</span>
+        <span class="text--l bold">{{
+          QrOption.NEEDLE === detected ? 'the needle!!!' : QrOption.HAY
+        }}</span>
       </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { type CodeResult } from './components/qr-reader.types';
+import type { CodeResult } from './components/qr-reader.types';
 import { getQuery } from 'ufo';
 import type QrReader from './components/qr-reader.vue';
 import { confetti_firework, confetti_hay } from './helpers/confetti';
@@ -33,15 +39,19 @@ const isQrOption = (string: string): string is QrOption =>
 const detected = ref<QrOption | undefined>(undefined);
 
 onMounted(() => {
-  watch(() => route.query.q, (newValue) => {
-    if (!newValue || typeof newValue !== 'string' || !isQrOption(newValue)) {
-      detected.value = undefined;
-      return;
+  watch(
+    () => route.query.q,
+    (newValue) => {
+      if (!newValue || typeof newValue !== 'string' || !isQrOption(newValue)) {
+        detected.value = undefined;
+        return;
+      }
+      detected.value = newValue;
+    },
+    {
+      immediate: true
     }
-    detected.value = newValue;
-  }, {
-    immediate: true
-  });
+  );
 });
 
 let needleCoolOff = false;
@@ -49,22 +59,22 @@ let unsetLastDetected: ReturnType<typeof setTimeout>;
 const onDetected = (result: CodeResult) => {
   if (needleCoolOff) return;
   const query = getQuery(result.text);
-  if (typeof query.q === 'string' && isQrOption(query.q) ) {
+  if (typeof query.q === 'string' && isQrOption(query.q)) {
     detected.value = query.q;
 
     clearTimeout(unsetLastDetected);
     unsetLastDetected = setTimeout(() => {
       detected.value = undefined;
-    }, 3000)
+    }, 3000);
   }
-}
+};
 
-watch(detected, newValue => {
+watch(detected, (newValue) => {
   if (newValue === QrOption.NEEDLE) {
     needleCoolOff = true;
     setTimeout(() => {
-      needleCoolOff = false
-    }, 3000)
+      needleCoolOff = false;
+    }, 3000);
     confetti_firework();
   } else if (newValue === QrOption.HAY) {
     confetti_hay();
@@ -77,7 +87,18 @@ $border-radius: 8px;
 
 :root {
   background-color: black;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Open Sans',
+    'Helvetica Neue',
+    sans-serif;
 }
 * {
   margin: 0;
@@ -91,7 +112,7 @@ $border-radius: 8px;
   font-size: 3rem;
 }
 .bold {
-  font-weight: bold;;
+  font-weight: bold;
 }
 
 .qr-reader {
