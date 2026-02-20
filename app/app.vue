@@ -1,20 +1,17 @@
 <template>
   <div>
     <qr-reader ref="qrReaderRef" @detected="onDetected" />
-    <div
-      class="content-area"
-      :style="{
-        '--content-area-margin-top': qrReaderRef?.height
-          ? qrReaderRef.height + 'px'
-          : '75vh'
-      }"
-    >
+    <div class="content-area" :style="{
+      '--content-area-margin-top': qrReaderRef?.height
+        ? qrReaderRef.height + 'px'
+        : '75vh'
+    }">
       <span v-if="!detected" class="text--m">Can you find the needle?</span>
       <template v-else>
         <span class="text--m">You found</span>
         <span class="text--l bold">{{
           QrOption.NEEDLE === detected ? 'the needle!!!' : QrOption.HAY
-        }}</span>
+          }}</span>
       </template>
     </div>
   </div>
@@ -100,6 +97,7 @@ $border-radius: 8px;
     'Helvetica Neue',
     sans-serif;
 }
+
 * {
   margin: 0;
   padding: 0;
@@ -108,9 +106,11 @@ $border-radius: 8px;
 .text--m {
   font-size: 1.5rem;
 }
+
 .text--l {
   font-size: 3rem;
 }
+
 .bold {
   font-weight: bold;
 }
